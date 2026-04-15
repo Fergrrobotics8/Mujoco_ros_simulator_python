@@ -1,0 +1,165 @@
+<mujoco model="lab_room_unitree_g1">
+  <include file="g1_with_hands.xml"/>
+
+  <statistic center="0 0 1.2" extent="6.2"/>
+
+  <visual>
+    <headlight diffuse="0.7 0.7 0.7" ambient="0.2 0.2 0.2" specular="0.9 0.9 0.9"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="135" elevation="-20" offwidth="1920" offheight="1080"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient"
+             rgb1="0.35 0.55 0.75" rgb2="0 0 0"
+             width="512" height="3072"/>
+
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge"
+             rgb1="0.82 0.82 0.82" rgb2="0.76 0.76 0.76"
+             markrgb="0.65 0.65 0.65" width="300" height="300"/>
+
+    <material name="floor_mat" texture="groundplane" texuniform="true"
+              texrepeat="12 12" reflectance="0.05"/>
+
+    <material name="wall_mat" rgba="0.92 0.92 0.92 1"/>
+    <material name="table_rect_mat" rgba="0.95 0.22 0.22 1"/>
+    <material name="table_round_mat" rgba="1.00 0.45 0.45 0.90"/>
+    <material name="desk_mat" rgba="0.75 0.75 0.75 1"/>
+    <material name="chair_mat" rgba="0.55 0.55 0.55 1"/>
+    <material name="column_mat" rgba="0.78 0.78 0.78 1"/>
+    <material name="shelf_mat" rgba="0.25 0.25 0.25 1"/>
+    <material name="box_mat" rgba="0.45 0.45 0.45 1"/>
+    <material name="test_area_mat" rgba="1.00 0.90 0.10 0.30"/>
+    <material name="cardboard_mat" rgba="0.72 0.53 0.30 1"/>
+  </asset>
+
+  <worldbody>
+    <!-- suelo -->
+    <geom name="floor" type="plane" size="0 0 0.05" material="floor_mat"/>
+
+    <!-- sala exterior aproximada 9.77 m x 8.73 m -->
+    <body name="room_shell">
+      <geom name="wall_north" type="box" pos="0 4.405 1.20" size="4.965 0.04 1.20" material="wall_mat"/>
+      <geom name="wall_south" type="box" pos="0 -4.405 1.20" size="4.965 0.04 1.20" material="wall_mat"/>
+      <geom name="wall_west"  type="box" pos="-4.925 0 1.20" size="0.04 4.445 1.20" material="wall_mat"/>
+      <geom name="wall_east"  type="box" pos="4.925 0 1.20" size="0.04 4.445 1.20" material="wall_mat"/>
+    </body>
+
+    <!-- ZONA DE PRUEBAS -->
+    <body name="test_area">
+      <geom name="test_area_geom"
+            type="box"
+            pos="-2.75 0.65 0.002"
+            size="2.180 3.770 0.002"
+            material="test_area_mat"
+            contype="0"
+            conaffinity="0"/>
+    </body>
+
+    <!-- mesa rectangular laboratorio -->
+    <body name="rect_table" pos="-4.510 3.565 0">
+      <geom name="rect_table_top"
+            type="box"
+            pos="0 0 0.7325"
+            size="0.375 0.800 0.0125"
+            material="table_rect_mat"/>
+
+      <geom name="rect_table_leg_1" type="box" pos=" 0.30  0.70 0.36625" size="0.03 0.03 0.36625" material="table_rect_mat"/>
+      <geom name="rect_table_leg_2" type="box" pos=" 0.30 -0.70 0.36625" size="0.03 0.03 0.36625" material="table_rect_mat"/>
+      <geom name="rect_table_leg_3" type="box" pos="-0.30  0.70 0.36625" size="0.03 0.03 0.36625" material="table_rect_mat"/>
+      <geom name="rect_table_leg_4" type="box" pos="-0.30 -0.70 0.36625" size="0.03 0.03 0.36625" material="table_rect_mat"/>
+    </body>
+
+    <!-- mesa redonda laboratorio -->
+    <body name="round_table" pos="-2.050 -2.150 0">
+      <geom name="round_table_top"
+            type="cylinder"
+            pos="0 0 0.7525"
+            size="0.50 0.0125"
+            material="table_round_mat"/>
+
+      <geom name="round_table_leg"
+            type="cylinder"
+            pos="0 0 0.37625"
+            size="0.10 0.37625"
+            material="table_round_mat"/>
+
+      <geom name="round_table_base"
+            type="cylinder"
+            pos="0 0 0.020"
+            size="0.24 0.020"
+            material="table_round_mat"/>
+    </body>
+    
+    <!-- caja azul -->
+    <body name="blue_box_on_red_table" pos="-4.35 3.565 0.890">
+      <freejoint/>
+      <geom name="blue_box_geom"
+            type="box"
+            size="0.08 0.08 0.08"
+            pos="0.10 0.00 0"
+            rgba="0.15 0.30 0.95 1"
+            mass="1.60"
+            friction="0.8 0.1 0.1"
+            condim="4"/>
+    </body>
+    <!-- columna -->
+    <body name="small_box_near_round" pos="-1.900 -3.000 0.30">
+      <geom name="small_box_geom"
+            type="box"
+            size="0.28 0.12 0.30"
+            material="box_mat"/>
+    </body>
+
+    <!-- escaleras arriba -->
+    <body name="stairs_area">
+      <geom name="stairs_top_1" type="box" pos="0.05 3.88 0.08" size="0.24 0.10 0.08" material="box_mat"/>
+      <geom name="stairs_top_2" type="box" pos="0.05 3.68 0.06" size="0.24 0.10 0.06" material="box_mat"/>
+      <geom name="stairs_top_3" type="box" pos="0.05 3.48 0.04" size="0.24 0.10 0.04" material="box_mat"/>
+    </body>
+
+
+    <!-- caja inferior -->
+    <body name="bottom_box_area" pos="-1.55 -4.10 0.12">
+      <geom name="bottom_box_geom" type="box" size="0.45 0.12 0.12" material="box_mat"/>
+    </body>
+
+    <!-- estanteria inferior derecha -->
+    <body name="bottom_shelf" pos="1.55 -4.05 0.20">
+      <geom name="shelf_base" type="box" size="0.70 0.14 0.20" material="shelf_mat"/>
+    </body>
+
+    <!-- escritorios derecha -->
+    <body name="desk_1" pos="2.15 3.90 0">
+      <geom name="desk_1_top" type="box" pos="0 0 0.76" size="0.70 0.35 0.04" material="desk_mat"/>
+      <geom name="desk_1_chair" type="cylinder" pos="0 -0.52 0.16" size="0.20 0.06" material="chair_mat"/>
+    </body>
+
+    <body name="desk_2" pos="4.05 3.10 0">
+      <geom name="desk_2_top" type="box" pos="0 0 0.76" size="0.30 0.78 0.04" material="desk_mat"/>
+      <geom name="desk_2_chair" type="cylinder" pos="-0.42 0 0.16" size="0.20 0.06" material="chair_mat"/>
+    </body>
+
+    <body name="desk_3" pos="4.05 0.80 0">
+      <geom name="desk_3_top" type="box" pos="0 0 0.76" size="0.30 0.78 0.04" material="desk_mat"/>
+      <geom name="desk_3_chair" type="cylinder" pos="-0.42 0 0.16" size="0.20 0.06" material="chair_mat"/>
+    </body>
+
+    <body name="desk_4" pos="4.05 -1.90 0">
+      <geom name="desk_4_top" type="box" pos="0 0 0.76" size="0.30 0.78 0.04" material="desk_mat"/>
+    </body>
+
+    <!-- caja de cartón delante del robot (1 m) -->
+    <body name="cardboard_box" pos="1.0 0 0.15">
+      <freejoint/>
+      <geom name="cardboard_box_geom"
+            type="box"
+            size="0.15 0.10 0.15"
+            material="cardboard_mat"
+            mass="0.80"
+            friction="0.8 0.1 0.1"
+            condim="4"/>
+    </body>
+
+  </worldbody>
+</mujoco>

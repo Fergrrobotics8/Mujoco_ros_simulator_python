@@ -1,0 +1,45 @@
+# Carpetas
+build/
+data/
+install/
+log/
+realsense_d435i/
+ros2_ws/src/dex3_parquet_to_rosbag
+__pycache__/
+
+# Archivos markdown / docs
+/README.md
+/CHANGELOG.md
+/LICENSE
+
+# Imágenes
+/g1.png
+/g1_with_hands.png
+/g1_mjx_colliders.png
+
+# XML
+/scene.xml
+/scene_mjx.xml
+/scene_with_hands.xml
+/g1.xml
+/g1_mjx.xml
+
+
+# Scripts Python
+/g1_ros2_camera_bridge.py
+/g1_ros2_lidar_bridge.py
+/g1_ros2_lowlevel_bridge.py
+/render_rgbd.py
+/check_finger_values.py
+/send_full_body_cmd.py
+
+# Logs / temporales
+/nodo.log
+
+# Otros posibles generados
+*.log
+*.pyc
+*.pyo
+*.pyd
+
+.vscode/
