@@ -8,7 +8,7 @@ ros2_ws/src/dex3_parquet_to_rosbag
 __pycache__/
 
 # Archivos markdown / docs
-/README.md
+/README_mujoco.md
 /CHANGELOG.md
 /LICENSE
 

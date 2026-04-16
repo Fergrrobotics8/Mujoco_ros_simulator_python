@@ -6,17 +6,17 @@ Unitree G1 simulation in MuJoCo with D435i camera + Livox Mid360 LIDAR, publishi
 
 ## Key Features
 
-✅ **Single MuJoCo instance** — 1 physics loop, camera + LIDAR + lowlevel state in harmony  
-✅ **Async rendering** — GPU camera rendering in background thread, doesn't block viewer  
-✅ **Async raycasting** — LIDAR raycasting in background CPU thread, doesn't block viewer  
-✅ **60 FPS viewer** — Smooth passive viewer over X11, full physical accuracy at real-time speed  
-✅ **Real-time physics** — ~0.98× real-time, adaptive step count (no fixed stagger)  
-✅ **43 DOF control** — 29 body + 7 left hand + 7 right hand, 250 Hz state publishing  
-✅ **TF broadcasting** — `torso_link → livox_frame` automatic transformation  
+  - **Single MuJoCo instance** — 1 physics loop, camera + LIDAR + lowlevel state in harmony
+  - **Async rendering** — GPU camera rendering in background thread, doesn't block viewer
+  - **Async raycasting** — LIDAR raycasting in background CPU thread, doesn't block viewer
+  - **60 FPS viewer** — Smooth passive viewer over X11, full physical accuracy at real-time speed
+  - **Real-time physics** — ~0.98× real-time, adaptive step count (no fixed stagger)
+  - **43 DOF control** — 29 body + 7 left hand + 7 right hand, 250 Hz state publishing
+  - **TF broadcasting** — `torso_link → livox_frame` automatic transformation
 
 ---
 
-## Quick Start — Unified Simulation
+## Quick Start — Mujoco Simulation
 
 ### 1. Host setup (one-time)
 
@@ -33,7 +33,7 @@ docker compose up -d
 docker exec -it mujoco_ros2_humble bash
 ```
 
-### 3. Run unified simulation
+### 3. Run simulation
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -62,7 +62,6 @@ The viewer runs smoothly at **~60 FPS**, camera publishes every 6 frames (~10 Hz
 
 ## Architecture & Performance
 
-### What's Unified
 
 One MuJoCo instance, one physics loop, three concurrent pub/sub streams:
 
@@ -88,7 +87,6 @@ One MuJoCo instance, one physics loop, three concurrent pub/sub streams:
 └──────────────────┘              └──────────────────┘
 ```
 
-**Why this works:**
 - Main thread only does `mj_copyData` (0.2 ms) + trigger threads
 - Camera GPU rendering happens in parallel
 - LIDAR CPU raycasting happens in parallel
@@ -281,14 +279,14 @@ for _ in range(steps):
 |-------|------|------|
 | `/camera/camera/color/image_raw` | Image (BGR8, 320×240) | 10 Hz |
 | `/camera/camera/color/camera_info` | CameraInfo | 10 Hz |
-| `/camera/camera/depth/image_raw` | Image (32FC1, 320×240) | 10 Hz |
+| `/camera/camera/depth/image_rect_raw` | Image (32FC1, 320×240) | 10 Hz |
 | `/camera/camera/depth/camera_info` | CameraInfo | 10 Hz |
 
 ### LIDAR (Livox Mid360 @ 10 Hz)
 
 | Topic | Type | Rate | Points |
 |-------|------|------|--------|
-| `/utlidar/cloud_livox_mid360` | PointCloud2 | 10 Hz | ~4700–4800 |
+| `/utlidar/cloud_livox_mid360` | PointCloud2 | 10 Hz | ~40960 |
 | (TF: `torso_link → livox_frame`) | TransformStamped | 10 Hz | — |
 
 ---
@@ -321,6 +319,8 @@ Left hand (7 DOF) + Right hand (7 DOF) via `/dex3/left/cmd`, `/dex3/right/cmd`:
 
 ### Send Commands
 
+(Be careful, positions might exceed robot and motors physical capabilities in real life)
+
 ```bash
 docker exec -it mujoco_ros2_humble bash
 python3 send_full_body_cmd.py stand      # All motors to 0
@@ -329,31 +329,12 @@ python3 send_full_body_cmd.py reach      # Arms up, hands open
 python3 send_full_body_cmd.py relax      # Relaxed posture
 python3 send_full_body_cmd.py custom 0 0 0 ... 0  # 43 values
 ```
-
----
-
-## Legacy Scripts (Separate Bridges)
-
-The following scripts run **separate** MuJoCo instances. They work but lack the optimization of the unified simulation (run at ~20 FPS because of blocking camera renders).
-
-**When to use:** Never, unless you need only one sensor or have specific requirements. The unified script is faster and simpler.
-
+**Custom 43 values:**
 ```bash
-# Separate instances (not recommended)
-python3 g1_ros2_lowlevel_bridge.py    # Lowlevel: 43 DOF state @ 250 Hz
-python3 g1_ros2_camera_bridge.py      # Camera: RGB+Depth @ 10 Hz (separate MuJoCo)
-python3 g1_ros2_lidar_bridge.py       # LIDAR: point cloud @ 10 Hz (separate MuJoCo)
+python3 send_full_body_cmd.py custom 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 --duration 3.0
 ```
 
-These publish the same ROS 2 topics but run in separate processes with separate physics, making state inconsistent.
-
-### Separate Bridge Performance
-
-- **g1_ros2_lowlevel_bridge.py**: ~60 FPS (light load: just lowlevel state)
-- **g1_ros2_camera_bridge.py**: ~20 FPS (camera blocks main loop, blocking render)
-- **g1_ros2_lidar_bridge.py**: ~30 FPS (LIDAR raycasting blocks main loop, ~100 ms)
-
-Running all 3 simultaneously: Each runs at its speed, but physics states are **not synchronized** between processes.
+**Options:** `--duration 2.0` (seconds), `--hz 50.0` (publish rate)
 
 ---
 
@@ -389,7 +370,7 @@ docker exec -it mujoco_ros2_humble bash
 rqt_image_view &
 ```
 
-Select `/camera/camera/color/image_raw` to view RGB (or `/camera/camera/depth/image_raw` for depth).
+Select `/camera/camera/color/image_raw` to view RGB (or `/camera/camera/depth/image_rect_raw` for depth).
 
 ---
 
@@ -458,11 +439,7 @@ With adaptive loop:
 ```
 unitree_g1/
 ├── g1_ros2_mujoco_complete_simulation.py   ← USE THIS (unified, 60 FPS)
-├── g1_ros2_lowlevel_bridge.py              (legacy, lowlevel only)
-├── g1_ros2_camera_bridge.py                (legacy, camera only)
-├── g1_ros2_lidar_bridge.py                 (legacy, LIDAR only)
 ├── send_full_body_cmd.py
-├── check_finger_values.py
 ├── scene_uni.xml
 ├── g1_with_hands.xml
 ├── docker_ros2_humble/
@@ -481,7 +458,7 @@ unitree_g1/
 | **Physics** | 0.98× real-time (adaptive) |
 | **Viewer FPS** | ~60 FPS (X11 vsync) |
 | **Camera resolution** | 320×240 @ 10 Hz (async GPU thread) |
-| **LIDAR points** | ~4700–4800 @ 10 Hz (async CPU thread) |
+| **LIDAR points** | ~40960 @ 10 Hz (async CPU thread) |
 | **Lowlevel state** | 250 Hz (ROS 2 timer) |
 | **CPU usage** | ~20% (main loop) |
 | **GPU usage** | ~25% (viewer GLX) |
@@ -490,32 +467,6 @@ unitree_g1/
 **With these settings, the simulation runs smoothly without optimization hints or parameter tuning.** The architecture ensures all three subsystems (physics, camera, LIDAR) proceed in parallel without contention.
 
 ---
-
-## Questions / Issues?
-
-If performance degrades or you see unexpected behavior:
-
-1. **Check GPU driver:** `nvidia-smi` should show ~25% GPU utilization
-2. **Check X11 latency:** `xwd -root > /tmp/test.xwd && ls -lh /tmp/test.xwd` (should complete instantly)
-3. **Profile the loop:** Uncomment timing code in main() to see bottleneck
-4. **Reduce camera resolution:** Try 160×120 (`RGB_W, RGB_H = 160, 120`) if FPS still drops
-
----
-
-**Version**: Unified async simulation (2026-04-13)  
-**Last verified**: April 13, 2026 with RTX 4000 Blackwell, MuJoCo 3.6.0, ROS 2 Humble
-
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| LIDAR_HZ | 10.0 | Publishing frequency (Hz) |
-| CUTOFF_DIST | 40.0 | Maximum range (meters) |
-| MIN_DIST | 0.15 | Minimum range filter (ignores points on robot) |
-| N_H | 313 | Horizontal rays per ring |
-| N_V | 64 | Vertical channels (rings) |
-| PHI_MIN_DEG | -45 | Vertical FOV minimum (degrees) |
-| PHI_MAX_DEG | 45 | Vertical FOV maximum (degrees) |
-
 ### TF Hierarchy
 
 The LIDAR frame integrates into your URDF chain:
@@ -531,56 +482,6 @@ The bridge automatically:
 4. Falls back to `world → livox_frame` if `torso_link` not found
 
 This allows your URDF to transform `torso_link` to any frame (e.g., `odom`, `base_link`, `map`), and the LIDAR frame follows automatically.
-
-### ROS Topics
-
-| Topic | Type | Message Count |
-|-------|------|---------------|
-| `/utlidar/cloud_livox_mid360` | PointCloud2 | ~20,032 points/frame |
-
-**Point cloud fields:**
-- `x, y, z` (float32): 3D position in `livox_frame`
-- `intensity` (float32): 0.1–1.0 based on distance
-- `ring` (uint16): Vertical channel (0–63)
-- `time` (float32): Intra-frame time offset (0.0–1.0)
-
-### Using in RViz
-
-1. Launch the LIDAR bridge:
-```bash
-docker exec -it mujoco_ros2_humble bash
-python3 g1_ros2_lidar_bridge.py
-```
-
-2. In another terminal, launch RViz:
-```bash
-docker exec -it mujoco_ros2_humble bash
-rviz2
-```
-
-3. In RViz configuration:
-   - **Fixed Frame**: Set to `world` (or your root frame)
-   - **Add Display** → PointCloud2
-   - **Topic**: `/utlidar/cloud_livox_mid360`
-   - **Queue Length**: 10–50 (increase if messages are dropped)
-   - **Color Transformer**: Intensity or Ring
-   - **Size**: 2–4 pixels
-
-You should see a dense, realistic point cloud with:
-- Higher density at mid-elevations (forward/"horizon" levels)
-- Sparser points at extreme up/down angles
-- Natural cyclic patterns across frames
-
-### Pattern Details
-
-The simulated Livox Mid360 generates realistic scans by:
-
-1. **Non-uniform horizontal rays per ring**: Ring distribution peaks at mid-elevation using `sin(π×normalized_ring)^1.5`
-2. **Per-ring wobble**: Small azimuth jitter `0.12 × sin(3θ + phase)` prevents perfect concentric circles
-3. **Elevation modulation**: `±0.8°` sinusoidal variation per horizontal position
-4. **Scan phase evolution**: Phase increments by `0.35 rad` each LIDAR publication for temporal variation
-
-Result: Point clouds resemble real Livox output (~12,800–12,900 points/frame depending on scene occlusion).
 
 ### Debugging
 
@@ -623,132 +524,7 @@ The bridge uses the **real Unitree topic architecture**:
 | `/lf/dex3/right/state` | `HandState` | Bridge → ROS | Right hand 7 |
 | `/dex3/right/cmd` | `HandCmd` | ROS → Bridge | Right hand 7 |
 
-### Motor Indexing
 
-**Body (29 DOF) — `/lowstate` indices 0-28:**
-```
- 0-5    Left leg  (hip_pitch/roll/yaw, knee, ankle_pitch/roll)
- 6-11   Right leg
-12-14   Waist     (yaw, roll, pitch)
-15-21   Left arm  (shoulder_pitch/roll/yaw, elbow, wrist_roll/pitch/yaw)
-22-28   Right arm
-```
-
-**Left hand (7 DOF) — `/lf/dex3/left/state` indices 0-6:**
-```
-0  thumb_0    (-1.047 → +1.047)
-1  thumb_1    (-1.047 → +0.724)
-2  thumb_2    (-1.745 →  0.000)
-3  index_0    ( 0.000 → +1.571)
-4  index_1    ( 0.000 → +1.745)
-5  middle_0   ( 0.000 → +1.571)
-6  middle_1   ( 0.000 → +1.745)
-```
-
-**Right hand (7 DOF) — `/lf/dex3/right/state` indices 0-6:** same layout as left hand.
-
-Joint limits are enforced automatically by MuJoCo (`inheritrange="1"` in XML actuators).
-
-### Send Motor Commands
-
-**Enter Docker container first:**
-```bash
-docker exec -it mujoco_ros2_humble bash
-```
-
-**Predefined postures (all 43 DOF: 29 body + 7 left hand + 7 right hand):**
-```bash
-python3 send_full_body_cmd.py stand       # All motors to 0
-python3 send_full_body_cmd.py reach       # Arms up, hands open
-python3 send_full_body_cmd.py grasp       # Arms bent, hands closing
-python3 send_full_body_cmd.py relax       # Relaxed posture
-```
-
-**Custom 43 values:**
-```bash
-python3 send_full_body_cmd.py custom 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 --duration 3.0
-```
-
-**Options:** `--duration 2.0` (seconds), `--hz 50.0` (publish rate)
-
-### Current configuration (optimized)
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| RGB_W, RGB_H | 1920x1080 | RGB resolution (official D435i) |
-| DEPTH_W, DEPTH_H | 1280x720 | Depth resolution (official D435i) |
-| PUB_HZ | 5 | Publishing frequency (5 topics/sec) |
-| VIEWER_HZ | 60 | Viewer render frequency (60 Hz) |
-| steps_per_frame | 8 | Batch of physics steps per visual frame |
-
-### Adjustments if performance is poor
-
-If viewer lags (you see "100%" in the corner):
-
-Option A - Lower PUB_HZ:
-```python
-PUB_HZ = 2  # 1 topic every 500ms instead of 200ms
-```
-
-Option B - Lower resolutions (if PUB_HZ=5 still lags):
-```python
-RGB_W, RGB_H = 960, 540      # Full HD down to half FHD
-DEPTH_W, DEPTH_H = 640, 360  # Half resolution
-```
-
-Option C - Lower VIEWER_HZ (last resort):
-```python
-VIEWER_HZ = 30  # Instead of 60 Hz
-```
-
-## Using topics from the host
-
-If you run a ROS 2 node on your PC (Jazzy) that wants to subscribe to the topics:
-
-```bash
-# On your host (outside Docker)
-ROS_DOMAIN_ID=0 ros2 topic echo /camera/camera/color/image_raw
-```
-
-Docker and host share network_mode: host, so DDS communicates between Humble (Docker) and Jazzy (host) without issues.
-
-## Troubleshooting
-
-### "X connection broken"
-You exited without stopping Docker. The viewer closed but the process remained. Kill the container:
-```bash
-docker compose kill
-docker compose up -d
-```
-
-### "unknown tag 'rclpy.type_hash.TypeHash'" in ros2 cli
-The ROS 2 daemon is confused. Inside Docker:
-```bash
-ros2 daemon stop
-ros2 daemon start
-ros2 topic list
-```
-
-### Topics do not appear
-Verify that python3 g1_ros2_camera_bridge.py is running:
-```bash
-docker exec -it mujoco_ros2_humble ps aux | grep g1_ros2
-```
-
-If not, the script crashed. Check the output logs.
-
-## Relevant Files
-
-| File | Purpose |
-|------|---------|
-| g1_ros2_lowlevel_bridge.py | Lowlevel bridge: 43 DOF state + control + IMU |
-| g1_ros2_camera_bridge.py | Camera bridge: D435i RGB + Depth → ROS topics |
-| g1_ros2_lidar_bridge.py | LIDAR bridge → /scan |
-| send_full_body_cmd.py | Command sender: postures + custom 43 DOF |
-| docker_ros2_humble/Dockerfile | Image: ROS 2 Humble + MuJoCo 3.6.0 + rviz2 + rqt |
-| docker_ros2_humble/docker-compose.yml | GPU passthrough, X11, network_mode host |
-| scene_uni.xml | Scene: lab + G1 + tables + cameras |
-| g1_with_hands.xml | G1 robot (29 body + 14 hands + D435i cameras) |
 
 ## Typical Workflow
 
@@ -779,25 +555,6 @@ ros2 topic echo /lf/dex3/right/state --once
 docker compose down
 ```
 
-## Technical Notes
-
-### Physics and Rendering
-
-- Batching: 8 physics steps (mj_step) -> 1 viewer sync (~60 Hz)
-  - Avoids overhead from frame-by-frame syncing
-  - GPU renders at 60 fps, physics effectively runs at ~300 fps (8x37.5)
-
-- Offscreen cameras: RGB 1920x1080 + Depth 1280x720 rendered on GPU every 200ms
-  - No parallelism (avoids GPU contention)
-  - Everything in main loop, synchronized
-
-### Docker X11 and GPU
-
-- network_mode: host - Share localhost for ROS 2 DDS
-- NVIDIA_DRIVER_CAPABILITIES=all - Container accesses GPU
-- /tmp/.X11-unix mounted - Render window on host
-- .bashrc auto-sources ROS 2 and kills stale daemon
-
 ## References
 
 - MuJoCo 3.6.0 Docs: https://mujoco.readthedocs.io/
@@ -805,21 +562,13 @@ docker compose down
 - RealSense D435i Specs: https://www.intelrealsense.com/depth-camera-d435i/
 - Unitree G1: https://www.unitreerobotics.com/
 
----
-
-Last updated: April 2026
-Status: Production-ready (Docker + GPU optimized)
-
 
 
 -----------------
+#### Special Commands 
 
-Para dar permisos de root y quitarles el candado a los archivos que ya se han generado:
+Give root permission and freedom of access to the already locked files:
+``` bash
 sudo chown -R $USER:$USER /home/fgarcia/ISAAC_ENVIRONMENT/mujoco-env/mujoco_g1/mujoco_menagerie/unitree_g1
+```
 
-
-
----------------
-
-
-nano /workspace/ws/src/dex3_parquet_to_rosbag/dex3_parquet_to_rosbag/publish_parquet.pynano /workspace/src/dex3_parquet_to_rosbag/dex3_parquet_to_rosbag/publish_parquet.py
