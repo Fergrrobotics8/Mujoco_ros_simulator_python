@@ -2,7 +2,9 @@
 
 Unitree G1 simulation in MuJoCo with D435i camera + Livox Mid360 LIDAR, publishing to ROS 2 topics (Humble), all within Docker.
 
-**Version**: Unified async simulation (camera + LIDAR in background threads, 60 FPS @ 320×240 camera)
+
+![Mujoco Simulation Ros2](assets/Simulacion_completa.gif)
+
 
 ## Key Features
 
