@@ -575,6 +575,6 @@ docker compose down
 
 Give root permission and freedom of access to the already locked files:
 ``` bash
-sudo chown -R $USER:$USER /home/fgarcia/ISAAC_ENVIRONMENT/mujoco-env/mujoco_g1/mujoco_menagerie/unitree_g1
+sudo chown -R $USER:$USER /home/fgarcia/Documents/test
 ```
 

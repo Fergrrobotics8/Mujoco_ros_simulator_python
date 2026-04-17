@@ -21,16 +21,13 @@ RUN pip3 install --no-cache-dir mujoco numpy opencv-python scipy pandas pyarrow
 
 WORKDIR /workspace
 
-# Set BASH_ENV so every bash session (including docker exec) sources ROS setup
-ENV BASH_ENV=/etc/bash.bashrc
-
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Auto-source ROS 2 setup for all users
-RUN echo 'source /opt/ros/humble/setup.bash' >> /etc/bash.bashrc && \
-    echo 'if [ -f /workspace/ros2_ws/install/setup.bash ]; then source /workspace/ros2_ws/install/setup.bash; fi' >> /etc/bash.bashrc
+# Auto-source ROS 2 for root (docker exec -it bash reads /root/.bashrc)
+RUN echo 'source /opt/ros/humble/setup.bash' >> /root/.bashrc && \
+    echo '[ -f /workspace/ros2_ws/install/setup.bash ] && source /workspace/ros2_ws/install/setup.bash' >> /root/.bashrc
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]
