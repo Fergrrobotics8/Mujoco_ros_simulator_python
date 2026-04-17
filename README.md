@@ -574,6 +574,7 @@ docker compose down
 #### Special Commands 
 
 Give root permission and freedom of access to the already locked files:
+
 ``` bash
 sudo chown -R $USER:$USER /home/fgarcia/Documents/test
 ```
