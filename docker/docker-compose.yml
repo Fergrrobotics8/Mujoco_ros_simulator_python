@@ -7,12 +7,13 @@ services:
     ipc: host
     stdin_open: true
     tty: true
-    user: "${HOST_UID}:${HOST_GID}"
     environment:
       - DISPLAY=${DISPLAY}
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=all
       - ROS_DOMAIN_ID=0
+      - HOST_UID=${HOST_UID}
+      - HOST_GID=${HOST_GID}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ../:/workspace:rw
