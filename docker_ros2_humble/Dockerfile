@@ -21,14 +21,13 @@ RUN pip3 install --no-cache-dir mujoco numpy opencv-python scipy pandas pyarrow
 
 WORKDIR /workspace
 
-# Build ROS2 packages on first container startup
-RUN /bin/bash -c 'source /opt/ros/humble/setup.bash && cd /workspace/ros2_ws && colcon build --symlink-install'
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Auto-source ROS 2 and kill any stale daemon on shell entry.
-# (Needed because network_mode:host shares localhost with the host,
-#  so a Jazzy daemon on the host would confuse Humble's ros2 CLI.)
+# Auto-source ROS 2 setup in bashrc
 RUN echo 'source /opt/ros/humble/setup.bash' >> /root/.bashrc && \
-    echo 'source /workspace/ros2_ws/install/setup.bash' >> /root/.bashrc && \
-    echo 'ros2 daemon stop >/dev/null 2>&1; ros2 daemon start >/dev/null 2>&1' >> /root/.bashrc
+    echo 'if [ -f /workspace/ros2_ws/install/setup.bash ]; then source /workspace/ros2_ws/install/setup.bash; fi' >> /root/.bashrc
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]
