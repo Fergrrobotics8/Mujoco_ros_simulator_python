@@ -2,9 +2,15 @@
 
 USERNAME="dev"
 
-#Fallback to root user if HOST_UID or HOST_GID are not set
-USERID="${HOST_UID:-0}"
-GROUPID="${HOST_GID:-0}"
+# Check if HOST_UID and HOST_GID are set
+if [ -z "${HOST_UID}" ] || [ -z "${HOST_GID}" ]; then
+    echo "ERROR: HOST_UID and HOST_GID environment variables must be set!"
+    echo "Run: export HOST_UID=\$(id -u) HOST_GID=\$(id -g)"
+    exit 1
+fi
+
+USERID="${HOST_UID}"
+GROUPID="${HOST_GID}"
 
 # Create group
 if ! getent group "${GROUPID}" > /dev/null; then
