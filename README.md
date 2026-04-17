@@ -28,10 +28,12 @@ xhost +local:root
 
 ### 2. Docker: build and launch
 
+Export user name to have permission over new created files inside the docker, as below:
+
 ```bash
-cd docker_ros2_humble
-#export user name to have permission over new created files inside the docker
-export UID=$(id -u) GID=$(id -g)
+cd docker
+
+export HOST_UID=$(id -u) HOST_GID=$(id -g)
 
 docker compose build
 docker compose up -d
