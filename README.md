@@ -28,8 +28,6 @@ xhost +local:root
 
 ### 2. Docker: build and launch
 
-Export user name to have permission over new created files inside the docker, as below:
-
 ```bash
 cd docker
 
