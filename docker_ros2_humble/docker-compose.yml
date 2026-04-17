@@ -7,6 +7,7 @@ services:
     ipc: host
     stdin_open: true
     tty: true
+    user: "${UID}:${GID}"
     environment:
       - DISPLAY=${DISPLAY}
       - NVIDIA_VISIBLE_DEVICES=all

@@ -25,9 +25,9 @@ WORKDIR /workspace
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Auto-source ROS 2 setup in bashrc
-RUN echo 'source /opt/ros/humble/setup.bash' >> /root/.bashrc && \
-    echo 'if [ -f /workspace/ros2_ws/install/setup.bash ]; then source /workspace/ros2_ws/install/setup.bash; fi' >> /root/.bashrc
+# Auto-source ROS 2 setup for all users
+RUN echo 'source /opt/ros/humble/setup.bash' >> /etc/bash.bashrc && \
+    echo 'if [ -f /workspace/ros2_ws/install/setup.bash ]; then source /workspace/ros2_ws/install/setup.bash; fi' >> /etc/bash.bashrc
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]
