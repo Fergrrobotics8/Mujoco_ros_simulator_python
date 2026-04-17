@@ -33,12 +33,10 @@ Export user name to have permission over new created files inside the docker, as
 ```bash
 cd docker
 
-export HOST_UID=$(id -u) HOST_GID=$(id -g)
-
 docker compose build
 docker compose up -d
 
-docker exec -it mujoco_ros2_humble su dev
+docker exec -it mujoco_ros2_humble bash
 ```
 
 ### 3. Run simulation

@@ -21,6 +21,9 @@ RUN pip3 install --no-cache-dir mujoco numpy opencv-python scipy pandas pyarrow
 
 WORKDIR /workspace
 
+# Set BASH_ENV so every bash session (including docker exec) sources ROS setup
+ENV BASH_ENV=/etc/bash.bashrc
+
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

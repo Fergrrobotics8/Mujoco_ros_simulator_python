@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 source /opt/ros/humble/setup.bash
 
 # Build ROS2 packages
