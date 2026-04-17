@@ -30,6 +30,9 @@ xhost +local:root
 
 ```bash
 cd docker_ros2_humble
+#export user name to have permission over new created files inside the docker
+export UID=$(id -u) GID=$(id -g)
+
 docker compose build
 docker compose up -d
 docker exec -it mujoco_ros2_humble bash
