@@ -487,31 +487,6 @@ The bridge automatically:
 
 This allows your URDF to transform `torso_link` to any frame (e.g., `odom`, `base_link`, `map`), and the LIDAR frame follows automatically.
 
-### Debugging
-
-**Check TF tree:**
-```bash
-docker exec -it mujoco_ros2_humble bash
-ros2 run tf2_tools view_frames.py
-# Generates frame_name.pdf in current directory
-```
-
-**Check topic publication:**
-```bash
-docker exec -it mujoco_ros2_humble bash
-ros2 topic echo /utlidar/cloud_livox_mid360 --once
-```
-
-**Check frequency:**
-```bash
-docker exec -it mujoco_ros2_humble bash
-ros2 topic hz /utlidar/cloud_livox_mid360
-# Should show ~10.0 Hz
-```
-
-If messages are dropped in RViz ("Message Filter dropping message..."), increase queue length in the PointCloud2 display settings.
-
-
 
 ### Architecture
 
