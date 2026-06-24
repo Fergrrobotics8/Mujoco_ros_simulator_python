@@ -1,6 +1,6 @@
 # MuJoCo + ROS 2 Humble — Unitree G1 Simulation
 
-Unitree G1 simulation in MuJoCo with D435i camera + Livox Mid360 LIDAR, publishing to ROS 2 topics (Humble), all within Docker.
+Unitree G1 simulation in MuJoCo with D435i camera + Livox Mid360 LIDAR, publishing to ROS 2 topics (Humble), all within one Docker.
 
 
 ![Mujoco Simulation Ros2](assets/Simulacion_completa.gif)
